@@ -5,72 +5,78 @@
     <title>The Death Rise</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Courier New', Courier, monospace; background: black; color: white; user-select: none; }
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; text-align: center; background: rgba(0,0,0,0.95); }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; text-align: center; background: rgba(0,0,0,0.95); transition: 1s; }
         .hidden { display: none !important; }
 
-        /* MENU STYLING - Grit & Nature */
-        h1 { font-size: 80px; color: #ff3333; text-shadow: 0 0 20px #ff0000; margin: 10px; font-weight: 900; letter-spacing: 5px; }
-        .ep-card { border: 2px solid #2d4a2d; padding: 20px; width: 220px; background: #0a0a0a; border-radius: 5px; margin: 10px; transition: 0.3s; }
-        .ep-card.active { border-color: #55ff55; box-shadow: 0 0 15px #1b3d1b; }
+        /* MENU & UI */
+        h1 { font-size: 70px; color: #ff3333; text-shadow: 0 0 20px #ff0000; margin: 10px; font-weight: 900; letter-spacing: 10px; }
+        .ep-card { border: 2px solid #2d4a2d; padding: 20px; width: 250px; background: #0a0a0a; border-radius: 5px; margin: 10px; }
+        .ep-card.active { border-color: #ff3333; box-shadow: 0 0 20px #5e0000; }
         
-        /* SETTINGS & TECH STATS */
-        #stats { position: absolute; top: 10px; left: 10px; font-family: monospace; font-size: 12px; color: #55ff55; pointer-events: none; text-align: left; background: rgba(0,0,0,0.5); padding: 5px; }
-        .settings-panel { background: rgba(10,10,10,0.9); padding: 20px; border: 1px solid #2d4a2d; margin-top: 20px; border-radius: 5px; width: 300px; }
-        input[type=range] { width: 100%; accent-color: #ff3333; }
-
-        /* BUTTONS */
-        .btn { padding: 15px 40px; font-size: 20px; background: #ff3333; border: none; color: white; cursor: pointer; font-weight: bold; transition: 0.2s; margin: 10px; }
-        .btn:hover { background: #55ff55; color: black; }
+        #stats { position: absolute; top: 10px; left: 10px; font-size: 12px; color: #55ff55; background: rgba(0,0,0,0.6); padding: 8px; border-radius: 5px; text-align: left; }
+        .settings { background: rgba(20,20,20,0.9); padding: 20px; border: 1px solid #444; border-radius: 10px; width: 320px; margin-top: 20px; }
+        
+        .btn { padding: 15px 45px; font-size: 22px; background: #ff3333; border: none; color: white; cursor: pointer; font-weight: bold; transition: 0.3s; margin: 10px; text-transform: uppercase; }
+        .btn:hover { background: white; color: #ff3333; transform: scale(1.05); }
 
         /* HUD */
-        #hud { position: absolute; bottom: 25px; left: 25px; z-index: 50; }
-        #progress { position: absolute; top: 25px; right: 25px; font-size: 24px; color: #55ff55; font-weight: bold; text-shadow: 2px 2px black; }
-        #crosshair { position: absolute; top: 50%; left: 50%; width: 10px; height: 10px; border: 1px solid white; transform: translate(-50%, -50%); display: none; }
-        
-        /* CINEMATIC */
-        #cinematic-text { max-width: 700px; font-size: 18px; line-height: 1.6; color: #88aa88; margin-bottom: 20px; }
+        #hud { position: absolute; bottom: 30px; left: 30px; z-index: 50; }
+        #progress { position: absolute; top: 30px; right: 30px; font-size: 26px; color: #00d4ff; font-weight: bold; text-shadow: 0 0 10px #00d4ff; }
+        #crosshair { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.5); border-radius: 50%; transform: translate(-50%, -50%); display: none; }
+
+        /* ANIMATION TEXT */
+        #intro-text { max-width: 800px; font-size: 20px; color: #88aa88; line-height: 1.8; animation: flicker 3s infinite; }
+        @keyframes flicker { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
     </style>
 </head>
 <body>
 
     <div id="stats">
-        FPS: <span id="fps">60</span><br>
-        PING: <span id="ping">14</span>ms
+        FPS: <span id="fps">0</span><br>
+        PING: <span id="ping">0</span>ms
     </div>
 
     <div id="menu" class="overlay">
         <h1>THE DEATH RISE</h1>
         <div style="display:flex;">
-            <div class="ep-card active" id="ep1">
+            <div class="ep-card active">
                 <h3>EPISODE 1</h3>
-                <p style="color:#55ff55;">THE OVERGROWTH</p>
+                <p style="color:#ff3333">SECTOR 4: FALLEN</p>
+                <div class="settings" style="width: auto; border:none; background:none;">
+                    <label>DIFFICULTY</label><br>
+                    <select id="diff-select" style="padding:10px; background:#111; color:white; border:1px solid #ff3333; width:100%;">
+                        <option value="1">EASY</option>
+                        <option value="2" selected>NORMAL</option>
+                        <option value="3">HARD</option>
+                        <option value="5">MASTER</option>
+                    </select>
+                </div>
                 <button class="btn" id="play-btn">PLAY</button>
             </div>
-            <div class="ep-card" style="opacity: 0.3;">
+            <div class="ep-card" style="opacity: 0.2;">
                 <h3>EPISODE 2</h3>
                 <p>LOCKED</p>
             </div>
         </div>
-        <div class="settings-panel">
-            <label>MOUSE SENSITIVITY</label><br>
-            <input type="range" id="sens-slider" min="1" max="20" value="10">
-            <p style="font-size:12px; margin-top:10px;">[W,A,S,D] Move | [SPACE] Jump | [ESC] Menu</p>
+        <div class="settings">
+            <label>SENSITIVITY</label><br>
+            <input type="range" id="sens-slider" min="1" max="20" value="10" style="width:100%; accent-color:red;">
         </div>
     </div>
 
     <div id="intro" class="overlay hidden">
-        <div id="cinematic-text">
-            <p>The world didn't end with a bang. It ended with a breath.</p>
-            <p>The spores transformed the population into "The Risen." Now, nature is taking back the steel and concrete. You are inside the Sector 4 Quarantine Zone.</p>
-            <p><strong>MISSION:</strong> Eliminate 30 Risen to secure the exit.</p>
+        <div id="intro-text">
+            <p><strong>[SYSTEM LOG: APRIL 20, 2026]</strong></p>
+            <p>The city has fallen. The infection moved faster than the military could contain. Sector 4 is now a graveyard of steel and vines.</p>
+            <p>The Risen are everywhere. They are no longer human, but they still wear our faces. Look for the yellow chests. Kill 30 of them. Secure the perimeter.</p>
         </div>
-        <button class="btn" id="start-mission">START MISSION</button>
+        <button class="btn" id="start-mission">ENTER THE RISE</button>
     </div>
 
-    <div id="death-screen" class="overlay hidden" style="background: rgba(40,0,0,0.98);">
-        <h1 style="font-size: 100px;">YOU FAILED US</h1>
-        <p>The Risen have claimed another survivor.</p>
-        <button class="btn" onclick="location.reload()">RETRY MISSION</button>
+    <div id="death-screen" class="overlay hidden" style="background: rgba(50,0,0,0.95);">
+        <h1 style="font-size: 80px;">YOU FAILED US</h1>
+        <p>Your remains will feed the Risen.</p>
+        <button class="btn" onclick="location.reload()">RETRY</button>
     </div>
 
     <div id="crosshair"></div>
@@ -84,91 +90,102 @@
         import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
         import { PointerLockControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/PointerLockControls.js';
 
-        let health = 100, kills = 0, sensitivity = 0.002;
+        let health = 100, kills = 0, sensitivity = 0.002, diffMod = 2;
         const enemies = [];
         let moveF = false, moveB = false, moveL = false, moveR = false, canJump = false;
         let velocity = new THREE.Vector3(), direction = new THREE.Vector3();
         let prevTime = performance.now();
 
-        // --- SCENE & LIGHTING ---
+        // --- SCENE SETUP ---
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x020302);
-        scene.fog = new THREE.Fog(0x020302, 0, 35);
+        scene.background = new THREE.Color(0x010201);
+        scene.fog = new THREE.Fog(0x010201, 0, 40);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true; // SHADOWS ENABLED
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0x1a241a, 0.8)); // Dark green ambient
-        const flashlight = new THREE.SpotLight(0xffffff, 1, 40, Math.PI/6, 0.5);
+        // Lights
+        const ambient = new THREE.AmbientLight(0x1a241a, 0.4);
+        scene.add(ambient);
+        
+        const flashlight = new THREE.SpotLight(0xffffff, 1.5, 45, Math.PI/6, 0.6);
+        flashlight.castShadow = true;
         scene.add(flashlight);
 
-        // --- THE "LAST OF US" BUILDING ---
-        const floorMat = new THREE.MeshStandardMaterial({color: 0x111111, roughness: 1});
-        const floor = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), floorMat);
+        // --- WORLD BUILDING ---
+        // Floor & Ceiling (Old Concrete)
+        const concreteMat = new THREE.MeshStandardMaterial({color: 0x111111, roughness: 1});
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), concreteMat);
         floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
         scene.add(floor);
 
-        // Ceiling
         const ceil = floor.clone();
         ceil.position.y = 6;
         ceil.rotation.x = Math.PI / 2;
         scene.add(ceil);
 
-        // Foliage Generator (Vines/Leaves)
-        function createVines(x, y, z) {
-            const vineGroup = new THREE.Group();
-            for(let i=0; i<15; i++) {
-                const leaf = new THREE.Mesh(
-                    new THREE.SphereGeometry(Math.random()*0.3),
-                    new THREE.MeshStandardMaterial({color: 0x1b3d1b})
-                );
-                leaf.position.set(x + Math.random(), y + (Math.random()*4 - 2), z + Math.random());
-                vineGroup.add(leaf);
+        // Windows & Background Chaos
+        const winHole = new THREE.Mesh(new THREE.BoxGeometry(10, 4, 0.5), new THREE.MeshBasicMaterial({color: 0x220000}));
+        winHole.position.set(0, 3, -15);
+        scene.add(winHole);
+
+        // Helicopter (Boom!)
+        const heli = new THREE.Group();
+        const heliBody = new THREE.Mesh(new THREE.BoxGeometry(2, 0.8, 1), new THREE.MeshBasicMaterial({color: 0x111111}));
+        heli.add(heliBody);
+        heli.position.set(20, 15, -50);
+        scene.add(heli);
+
+        // Vines / Overgrowth
+        function addVines(x, z) {
+            for(let i=0; i<10; i++) {
+                const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.2), new THREE.MeshStandardMaterial({color: 0x1a331a}));
+                leaf.position.set(x + Math.random(), Math.random()*5, z + Math.random());
+                scene.add(leaf);
             }
-            scene.add(vineGroup);
         }
+        for(let i=-20; i<20; i+=5) addVines(9, i);
 
-        // Walls with Foliage
-        for(let i=-20; i<20; i+=10) {
-            const wall = new THREE.Mesh(new THREE.BoxGeometry(1, 6, 10), new THREE.MeshStandardMaterial({color: 0x1a1a1a}));
-            wall.position.set(8, 3, i);
-            scene.add(wall);
-            createVines(7.5, 3, i); // Add plants to wall
-        }
-
-        // --- HUMANOID RISEN (Human-like) ---
+        // --- ENEMY MODEL (Realistic Humanoid) ---
         function spawnRisen() {
-            const guy = new THREE.Group();
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1, 0.3), new THREE.MeshStandardMaterial({color: 0x222222}));
-            const head = new THREE.Mesh(new THREE.SphereGeometry(0.25), new THREE.MeshStandardMaterial({color: 0x6e5a4e}));
-            head.position.y = 0.7;
-            const armL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.7, 0.15), new THREE.MeshStandardMaterial({color: 0x6e5a4e}));
-            armL.position.set(-0.35, 0.1, 0);
-            const armR = armL.clone(); armR.position.x = 0.35;
-            
-            guy.add(body, head, armL, armR);
-            guy.position.set(Math.random()*30-15, 1.2, Math.random()*30-15);
-            scene.add(guy);
-            enemies.push(guy);
-        }
-        for(let i=0; i<10; i++) spawnRisen();
+            const group = new THREE.Group();
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.8, 0.3), new THREE.MeshStandardMaterial({color: 0x222222}));
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.2), new THREE.MeshStandardMaterial({color: 0x6e5a4e}));
+            head.position.y = 0.6;
+            const armL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.6, 0.15), new THREE.MeshStandardMaterial({color: 0x6e5a4e}));
+            armL.position.set(-0.35, 0.2, 0); armL.rotation.z = 0.2;
+            const armR = armL.clone(); armR.position.x = 0.35; armR.rotation.z = -0.2;
+            const legL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.7, 0.2), new THREE.MeshStandardMaterial({color: 0x111111}));
+            legL.position.set(-0.15, -0.7, 0);
+            const legR = legL.clone(); legR.position.x = 0.15;
 
-        // --- PLAYER ARM (Half-Life Style) ---
+            group.add(torso, head, armL, armR, legL, legR);
+            group.traverse(obj => { if(obj.isMesh) obj.castShadow = true; });
+            group.position.set(Math.random()*40-20, 1.4, Math.random()*40-20);
+            scene.add(group);
+            enemies.push(group);
+        }
+        for(let i=0; i<8; i++) spawnRisen();
+
+        // --- PLAYER ARMS ---
         const playerArm = new THREE.Group();
-        const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.8), new THREE.MeshStandardMaterial({color: 0x333333}));
+        const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.7), new THREE.MeshStandardMaterial({color: 0x222222}));
         sleeve.rotation.x = Math.PI / 2;
-        const hand = new THREE.Mesh(new THREE.SphereGeometry(0.07), new THREE.MeshStandardMaterial({color: 0xd2b48c}));
+        const hand = new THREE.Mesh(new THREE.SphereGeometry(0.06), new THREE.MeshStandardMaterial({color: 0xd2b48c}));
         hand.position.z = -0.4;
-        const gun = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.15, 0.5), new THREE.MeshStandardMaterial({color: 0x000000}));
+        const gun = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 0.5), new THREE.MeshStandardMaterial({color: 0x000000}));
         gun.position.set(0, 0.1, -0.6);
         playerArm.add(sleeve, hand, gun);
         scene.add(playerArm);
 
-        // --- CONTROLS ---
+        // --- INTERACTION ---
         const controls = new PointerLockControls(camera, document.body);
         document.getElementById('play-btn').onclick = () => {
+            diffMod = parseInt(document.getElementById('diff-select').value);
             sensitivity = document.getElementById('sens-slider').value * 0.0002;
             document.getElementById('menu').classList.add('hidden');
             document.getElementById('intro').classList.remove('hidden');
@@ -185,46 +202,42 @@
             document.getElementById('crosshair').style.display = 'block';
         });
 
-        // Movement logic
-        const onKey = (e, val) => {
-            if(e.code === 'KeyW') moveF = val;
-            if(e.code === 'KeyS') moveB = val;
-            if(e.code === 'KeyA') moveL = val;
-            if(e.code === 'KeyD') moveR = val;
-            if(e.code === 'Space' && val && canJump) { velocity.y += 10; canJump = false; }
-        };
-        document.addEventListener('keydown', (e) => onKey(e, true));
-        document.addEventListener('keyup', (e) => onKey(e, false));
+        document.addEventListener('keydown', (e) => {
+            if(e.code === 'KeyW') moveF = true;
+            if(e.code === 'KeyS') moveB = true;
+            if(e.code === 'KeyA') moveL = true;
+            if(e.code === 'KeyD') moveR = true;
+            if(e.code === 'Space' && canJump) { velocity.y += 10; canJump = false; }
+        });
+        document.addEventListener('keyup', (e) => {
+            if(e.code === 'KeyW') moveF = false;
+            if(e.code === 'KeyS') moveB = false;
+            if(e.code === 'KeyA') moveL = false;
+            if(e.code === 'KeyD') moveR = false;
+        });
 
-        // --- SHOOTING & BULLET HITS ---
+        // Shooting
         window.addEventListener('mousedown', () => {
             if(!controls.isLocked) return;
             const ray = new THREE.Raycaster();
             ray.setFromCamera(new THREE.Vector2(), camera);
             const hits = ray.intersectObjects(enemies, true);
-            
             if(hits.length > 0) {
                 const target = hits[0].object.parent;
-                // Impact spark
-                const spark = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshBasicMaterial({color: 0xff0000}));
-                spark.position.copy(hits[0].point);
-                scene.add(spark);
-                setTimeout(() => scene.remove(spark), 50);
+                // Blood Splatter
+                const hit = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshBasicMaterial({color: 0x660000}));
+                hit.position.copy(hits[0].point);
+                scene.add(hit);
+                setTimeout(() => scene.remove(hit), 100);
 
                 scene.remove(target);
                 enemies.splice(enemies.indexOf(target), 1);
                 kills++;
-                updateUI();
+                document.getElementById('kill-count').innerText = kills;
+                document.getElementById('percent').innerText = Math.min(Math.floor((kills/30)*100), 100);
                 spawnRisen();
             }
         });
-
-        function updateUI() {
-            document.getElementById('kill-count').innerText = kills;
-            document.getElementById('hp').innerText = Math.floor(health);
-            let p = Math.floor((kills/30)*100);
-            document.getElementById('percent').innerText = Math.min(p, 100);
-        }
 
         // --- GAME LOOP ---
         let frames = 0, lastTime = Date.now();
@@ -233,11 +246,11 @@
             const time = performance.now();
             const delta = (time - prevTime) / 1000;
 
-            // Stats Update
+            // Stats
             frames++;
             if(Date.now() > lastTime + 1000) {
                 document.getElementById('fps').innerText = frames;
-                document.getElementById('ping').innerText = Math.floor(Math.random()*5 + 12);
+                document.getElementById('ping').innerText = Math.floor(Math.random()*5 + 15);
                 frames = 0; lastTime = Date.now();
             }
 
@@ -260,20 +273,24 @@
 
                 if (camera.position.y < 1.6) { velocity.y = 0; camera.position.y = 1.6; canJump = true; }
 
-                // Arm positioning
+                // Follow player
                 playerArm.position.copy(camera.position);
                 playerArm.rotation.copy(camera.rotation);
                 playerArm.translateZ(-0.4); playerArm.translateX(0.3); playerArm.translateY(-0.3);
                 flashlight.position.copy(camera.position);
                 flashlight.target.position.set(camera.position.x, camera.position.y, camera.position.z - 1);
 
-                // Enemies
+                // Chaos Animation (Helicopter)
+                heli.position.x -= 0.1;
+                if(heli.position.x < -20) heli.position.x = 20; // Loop crash
+
+                // Enemy AI
                 enemies.forEach(en => {
-                    en.lookAt(camera.position.x, 1.2, camera.position.z);
-                    en.translateZ(0.04);
+                    en.lookAt(camera.position.x, 1.4, camera.position.z);
+                    en.translateZ(0.02 * diffMod);
                     if(en.position.distanceTo(camera.position) < 1.5) {
-                        health -= 0.5;
-                        updateUI();
+                        health -= (0.2 * diffMod);
+                        document.getElementById('hp').innerText = Math.floor(health);
                         if(health <= 0) {
                             controls.unlock();
                             document.getElementById('death-screen').classList.remove('hidden');
