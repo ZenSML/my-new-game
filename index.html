@@ -1,114 +1,197 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Lost Atlantis: The Game</title>
+    <title>Lost Atlantis</title>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
-        #ui {
-            position: absolute; bottom: 20px; left: 20px;
-            color: lime; font-size: 24px; text-shadow: 2px 2px black;
-            pointer-events: none;
+        body { margin: 0; overflow: hidden; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: black; }
+        
+        /* THE MAIN MENU */
+        #main-menu {
+            position: absolute; width: 100%; height: 100%;
+            background: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
+            z-index: 100; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; color: white;
+        }
+        #main-menu h1 { 
+            font-size: 80px; letter-spacing: 15px; margin-bottom: 10px; 
+            text-transform: uppercase; font-weight: 900;
+        }
+        #main-menu p { font-size: 20px; letter-spacing: 5px; color: #888; margin-bottom: 40px; }
+        .play-btn {
+            padding: 15px 50px; font-size: 20px; font-weight: bold; background: white; 
+            border: none; color: black; cursor: pointer; transition: 0.2s;
+        }
+        .play-btn:hover { background: #ccc; transform: scale(1.05); }
+
+        /* HUD & CROSSHAIR */
+        #ui { 
+            position: absolute; bottom: 30px; left: 30px; color: white; 
+            font-size: 24px; font-weight: bold; pointer-events: none; z-index: 50;
         }
         #crosshair {
-            position: absolute; top: 50%; left: 50%;
-            width: 10px; height: 10px; border: 2px solid lime;
-            border-radius: 50%; transform: translate(-50%, -50%);
-            pointer-events: none;
-        }
-        #instructions {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); color: white;
-            display: flex; flex-direction: column; justify-content: center;
-            align-items: center; cursor: pointer; z-index: 10;
+            position: absolute; top: 50%; left: 50%; width: 6px; height: 6px;
+            background: white; border-radius: 50%; transform: translate(-50%, -50%); 
+            pointer-events: none; z-index: 50; display: none;
         }
     </style>
 </head>
 <body>
-    <div id="crosshair"></div>
-    <div id="ui">HEALTH: 100 | AMMO: ∞</div>
-    <div id="instructions">
-        <h1>LOST ATLANTIS: MISSION 1</h1>
-        <p>CLICK TO START</p>
-        <p>(W,A,S,D to Walk | CLICK to Shoot)</p>
+
+    <div id="main-menu">
+        <h1>Lost Atlantis</h1>
+        <p>STREETWEAR SURVIVAL</p>
+        <button class="play-btn" id="start-btn">ENTER</button>
     </div>
+
+    <div id="crosshair"></div>
+    <div id="ui" style="display:none;">HEALTH: <span id="hp">100</span> | SCORE: <span id="score">0</span></div>
 
     <script type="module">
         import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
         import { PointerLockControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/PointerLockControls.js';
 
-        // --- 1. THE WORLD ---
+        let score = 0;
+        const enemies = [];
+        
+        // --- 1. SCENE SETUP ---
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x050505);
-        scene.fog = new THREE.Fog(0x050505, 0, 50); // Fog makes it moody
+        scene.background = new THREE.Color(0x0a0a0a); // Very dark grey
+        scene.fog = new THREE.Fog(0x0a0a0a, 0, 40); // Hides the edge of the world
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        const light = new THREE.PointLight(0xffffff, 1, 100);
-        light.position.set(0, 10, 0);
-        scene.add(light);
+        // Lights
         scene.add(new THREE.AmbientLight(0x404040));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        dirLight.position.set(10, 20, 10);
+        scene.add(dirLight);
 
         // --- 2. THE FLOOR ---
         const floor = new THREE.Mesh(
             new THREE.PlaneGeometry(200, 200),
-            new THREE.MeshPhongMaterial({ color: 0x111111 })
+            new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 })
         );
         floor.rotation.x = -Math.PI / 2;
         scene.add(floor);
 
-        // --- 3. THE WEAPON (Following the Camera) ---
-        const gunGeom = new THREE.BoxGeometry(0.1, 0.1, 0.5);
-        const gunMat = new THREE.MeshPhongMaterial({ color: 0x333333 });
-        const gun = new THREE.Mesh(gunGeom, gunMat);
-        scene.add(gun); // We add it to the scene but update position in loop
+        // --- 3. THE ARM AND WEAPON ---
+        const armGroup = new THREE.Group();
+        
+        // The Arm (Grey sleeve)
+        const armGeo = new THREE.BoxGeometry(0.15, 0.15, 0.6);
+        const armMat = new THREE.MeshStandardMaterial({ color: 0x555555 });
+        const arm = new THREE.Mesh(armGeo, armMat);
+        arm.position.set(0, 0, 0.2);
+        armGroup.add(arm);
 
-        // --- 4. THE ENEMY ---
-        const enemies = [];
+        // The Weapon (Sleek block)
+        const gunGeo = new THREE.BoxGeometry(0.1, 0.2, 0.4);
+        const gunMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+        const gun = new THREE.Mesh(gunGeo, gunMat);
+        gun.position.set(0, 0.05, -0.3);
+        armGroup.add(gun);
+
+        scene.add(armGroup);
+
+        // --- 4. THE ENEMIES (Mannequins in black t-shirts) ---
         function createEnemy() {
-            const mesh = new THREE.Mesh(
-                new THREE.BoxGeometry(1, 2, 1),
-                new THREE.MeshPhongMaterial({ color: 0xff0000 })
-            );
-            mesh.position.set(Math.random() * 20 - 10, 1, Math.random() * -20 - 5);
-            scene.add(mesh);
-            enemies.push(mesh);
+            const enemyGroup = new THREE.Group();
+
+            // Body (Black T-Shirt)
+            const bodyGeo = new THREE.BoxGeometry(0.8, 1.2, 0.4);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x000000 }); // Black shirt
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 0.6; // Lift above ground
+            enemyGroup.add(body);
+
+            // Head (Grey mannequin)
+            const headGeo = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+            const headMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+            const head = new THREE.Mesh(headGeo, headMat);
+            head.position.y = 1.4;
+            enemyGroup.add(head);
+
+            // Position randomly
+            enemyGroup.position.set((Math.random() - 0.5) * 40, 0, (Math.random() - 0.5) * 40 - 10);
+            
+            // Add a custom property so the raycaster knows this is an enemy part
+            body.userData.isEnemy = true;
+            body.userData.parentGroup = enemyGroup;
+            head.userData.isEnemy = true;
+            head.userData.parentGroup = enemyGroup;
+
+            scene.add(enemyGroup);
+            enemies.push(enemyGroup);
         }
-        for(let i=0; i<5; i++) createEnemy(); // Create 5 enemies
 
-        // --- 5. CONTROLS & SHOOTING ---
+        // Spawn 10 enemies
+        for(let i = 0; i < 10; i++) createEnemy();
+
+        // --- 5. CONTROLS & MAIN MENU LOGIC ---
         const controls = new PointerLockControls(camera, document.body);
-        document.getElementById('instructions').addEventListener('click', () => controls.lock());
-        controls.addEventListener('lock', () => document.getElementById('instructions').style.display = 'none');
-        controls.addEventListener('unlock', () => document.getElementById('instructions').style.display = 'block');
+        const mainMenu = document.getElementById('main-menu');
+        const startBtn = document.getElementById('start-btn');
+        const crosshair = document.getElementById('crosshair');
+        const ui = document.getElementById('ui');
 
-        // Raycaster (The Shooting Line)
+        startBtn.addEventListener('click', () => {
+            controls.lock(); // Locks the mouse and starts the game
+        });
+
+        controls.addEventListener('lock', () => {
+            mainMenu.style.display = 'none';
+            crosshair.style.display = 'block';
+            ui.style.display = 'block';
+        });
+
+        controls.addEventListener('unlock', () => {
+            mainMenu.style.display = 'flex';
+            crosshair.style.display = 'none';
+            ui.style.display = 'none';
+        });
+
+        // --- 6. SHOOTING (Raycaster) ---
         const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2(0, 0); // Center of screen
+        const mouse = new THREE.Vector2(0, 0); // Always shoot from center of screen
 
         window.addEventListener('mousedown', () => {
             if (!controls.isLocked) return;
 
-            // Flash effect for shooting
-            gun.position.z += 0.1; 
-            
-            // Check for hits
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(enemies);
+            // Recoil animation effect
+            armGroup.position.z += 0.05; 
+            setTimeout(() => armGroup.position.z -= 0.05, 50);
 
-            if (intersects.length > 0) {
-                const target = intersects[0].object;
-                target.material.color.set(0xffffff); // Turn white when hit
-                setTimeout(() => {
-                    scene.remove(target); // Remove from world
-                    enemies.splice(enemies.indexOf(target), 1); // Remove from list
-                }, 100);
+            raycaster.setFromCamera(mouse, camera);
+            
+            // Check what the laser hits (we have to check the children of the scene)
+            const intersects = raycaster.intersectObjects(scene.children, true);
+
+            for (let i = 0; i < intersects.length; i++) {
+                const hitObj = intersects[i].object;
+                
+                // If we hit a part of an enemy
+                if (hitObj.userData.isEnemy) {
+                    const enemyGroup = hitObj.userData.parentGroup;
+                    
+                    // Remove from scene and list
+                    scene.remove(enemyGroup);
+                    enemies.splice(enemies.indexOf(enemyGroup), 1);
+                    
+                    // Update score
+                    score += 10;
+                    document.getElementById('score').innerText = score;
+                    
+                    // Spawn a new one to replace it
+                    createEnemy();
+                    break; // Stop checking after hitting the first thing
+                }
             }
         });
 
-        // --- 6. MOVEMENT ---
+        // --- 7. MOVEMENT ---
         let moveF = false, moveB = false, moveL = false, moveR = false;
         document.addEventListener('keydown', (e) => {
             if(e.code === 'KeyW') moveF = true;
@@ -123,31 +206,37 @@
             if(e.code === 'KeyD') moveR = false;
         });
 
-        // --- 7. GAME LOOP ---
+        // --- 8. GAME LOOP ---
         function animate() {
             requestAnimationFrame(animate);
 
             if (controls.isLocked) {
                 // Move Player
-                const speed = 0.1;
+                const speed = 0.15;
                 if (moveF) controls.moveForward(speed);
                 if (moveB) controls.moveForward(-speed);
                 if (moveL) controls.moveRight(-speed);
                 if (moveR) controls.moveRight(speed);
 
-                // Make Gun follow Camera
-                gun.position.copy(camera.position);
-                gun.rotation.copy(camera.rotation);
-                gun.updateMatrix();
-                gun.translateZ(-0.6); // Move in front of eyes
-                gun.translateX(0.3);  // Move to the right hand side
-                gun.translateY(-0.2); // Move down a bit
+                // Lock the Arm/Weapon to the camera view
+                armGroup.position.copy(camera.position);
+                armGroup.rotation.copy(camera.rotation);
+                armGroup.updateMatrix();
+                armGroup.translateZ(-0.5); // Move in front
+                armGroup.translateX(0.3);  // Move to the right
+                armGroup.translateY(-0.2); // Move down
+
+                // Make enemies slowly move towards the player
+                enemies.forEach(enemy => {
+                    enemy.lookAt(camera.position.x, enemy.position.y, camera.position.z);
+                    enemy.translateZ(0.02); // Move forward on their own Z axis
+                });
             }
 
             renderer.render(scene, camera);
         }
 
-        camera.position.y = 1.6;
+        camera.position.y = 1.6; // Eye level
         animate();
     </script>
 </body>
