@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lost Atlantis: The Game</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
+        #ui {
+            position: absolute; bottom: 20px; left: 20px;
+            color: lime; font-size: 24px; text-shadow: 2px 2px black;
+            pointer-events: none;
+        }
+        #crosshair {
+            position: absolute; top: 50%; left: 50%;
+            width: 10px; height: 10px; border: 2px solid lime;
+            border-radius: 50%; transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+        #instructions {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); color: white;
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; cursor: pointer; z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="crosshair"></div>
+    <div id="ui">HEALTH: 100 | AMMO: ∞</div>
+    <div id="instructions">
+        <h1>LOST ATLANTIS: MISSION 1</h1>
+        <p>CLICK TO START</p>
+        <p>(W,A,S,D to Walk | CLICK to Shoot)</p>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+        import { PointerLockControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/PointerLockControls.js';
+
+        // --- 1. THE WORLD ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050505);
+        scene.fog = new THREE.Fog(0x050505, 0, 50); // Fog makes it moody
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const light = new THREE.PointLight(0xffffff, 1, 100);
+        light.position.set(0, 10, 0);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x404040));
+
+        // --- 2. THE FLOOR ---
+        const floor = new THREE.Mesh(
+            new THREE.PlaneGeometry(200, 200),
+            new THREE.MeshPhongMaterial({ color: 0x111111 })
+        );
+        floor.rotation.x = -Math.PI / 2;
+        scene.add(floor);
+
+        // --- 3. THE WEAPON (Following the Camera) ---
+        const gunGeom = new THREE.BoxGeometry(0.1, 0.1, 0.5);
+        const gunMat = new THREE.MeshPhongMaterial({ color: 0x333333 });
+        const gun = new THREE.Mesh(gunGeom, gunMat);
+        scene.add(gun); // We add it to the scene but update position in loop
+
+        // --- 4. THE ENEMY ---
+        const enemies = [];
+        function createEnemy() {
+            const mesh = new THREE.Mesh(
+                new THREE.BoxGeometry(1, 2, 1),
+                new THREE.MeshPhongMaterial({ color: 0xff0000 })
+            );
+            mesh.position.set(Math.random() * 20 - 10, 1, Math.random() * -20 - 5);
+            scene.add(mesh);
+            enemies.push(mesh);
+        }
+        for(let i=0; i<5; i++) createEnemy(); // Create 5 enemies
+
+        // --- 5. CONTROLS & SHOOTING ---
+        const controls = new PointerLockControls(camera, document.body);
+        document.getElementById('instructions').addEventListener('click', () => controls.lock());
+        controls.addEventListener('lock', () => document.getElementById('instructions').style.display = 'none');
+        controls.addEventListener('unlock', () => document.getElementById('instructions').style.display = 'block');
+
+        // Raycaster (The Shooting Line)
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2(0, 0); // Center of screen
+
+        window.addEventListener('mousedown', () => {
+            if (!controls.isLocked) return;
+
+            // Flash effect for shooting
+            gun.position.z += 0.1; 
+            
+            // Check for hits
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(enemies);
+
+            if (intersects.length > 0) {
+                const target = intersects[0].object;
+                target.material.color.set(0xffffff); // Turn white when hit
+                setTimeout(() => {
+                    scene.remove(target); // Remove from world
+                    enemies.splice(enemies.indexOf(target), 1); // Remove from list
+                }, 100);
+            }
+        });
+
+        // --- 6. MOVEMENT ---
+        let moveF = false, moveB = false, moveL = false, moveR = false;
+        document.addEventListener('keydown', (e) => {
+            if(e.code === 'KeyW') moveF = true;
+            if(e.code === 'KeyS') moveB = true;
+            if(e.code === 'KeyA') moveL = true;
+            if(e.code === 'KeyD') moveR = true;
+        });
+        document.addEventListener('keyup', (e) => {
+            if(e.code === 'KeyW') moveF = false;
+            if(e.code === 'KeyS') moveB = false;
+            if(e.code === 'KeyA') moveL = false;
+            if(e.code === 'KeyD') moveR = false;
+        });
+
+        // --- 7. GAME LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (controls.isLocked) {
+                // Move Player
+                const speed = 0.1;
+                if (moveF) controls.moveForward(speed);
+                if (moveB) controls.moveForward(-speed);
+                if (moveL) controls.moveRight(-speed);
+                if (moveR) controls.moveRight(speed);
+
+                // Make Gun follow Camera
+                gun.position.copy(camera.position);
+                gun.rotation.copy(camera.rotation);
+                gun.updateMatrix();
+                gun.translateZ(-0.6); // Move in front of eyes
+                gun.translateX(0.3);  // Move to the right hand side
+                gun.translateY(-0.2); // Move down a bit
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        camera.position.y = 1.6;
+        animate();
+    </script>
+</body>
+</html>
